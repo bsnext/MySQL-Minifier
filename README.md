@@ -60,7 +60,23 @@ LIMIT 10; # Limit to top 10 results
 ```
 
 ## Result:
-<b>1558 characters.</b>
+<b>1550 characters.</b>
 ```sql
-SET@running_total:=0,@previous_salary:=0;SELECT E.id,E.name,CONCAT(E.first_name,' ',E.last_name)AS full_name,D.name AS department,P.title AS project,T.task_description,AVG(T.hours)AS average_hours,SUM(T.hours)OVER(PARTITION BY E.id ORDER BY T.date)AS cumulative_hours,@running_total:=@running_total+E.salary AS running_total_salary,CASE WHEN@previous_salary<E.salary THEN 'Increased' ELSE 'Decreased' END AS salary_trend,@previous_salary:=E.salary,(SELECT GROUP_CONCAT(task_name SEPARATOR ',')FROM tasks WHERE employee_id=E.id)AS all_tasks,(SELECT MAX(budget)FROM projects WHERE manager_id=E.id)AS max_project_budget,(SELECT MIN(start_date)FROM projects WHERE department_id=D.id)AS department_earliest_project,(SELECT COUNT(*)FROM department_employees WHERE department_id=D.id)AS department_size,(SELECT AVG(salary)FROM employees WHERE department_id=D.id)AS department_avg_salary,(SELECT SUM(hours)FROM tasks WHERE employee_id=E.id AND date BETWEEN '2023-01-01' AND '2023-06-30')AS total_hours_first_half FROM employees E JOIN department_employees DE ON E.id=DE.employee_id JOIN departments D ON DE.department_id=D.id LEFT JOIN project_assignments PA ON E.id=PA.employee_id LEFT JOIN projects P ON PA.project_id=P.id LEFT JOIN tasks T ON E.id=T.employee_id WHERE E.salary>(SELECT AVG(salary)FROM employees WHERE department_id=D.id)AND E.start_date<'2023-01-01' AND EXISTS(SELECT 1 FROM projects WHERE manager_id=E.id)GROUP BY E.id,E.name,D.name,P.title,T.task_description ORDER BY cumulative_hours DESC,max_project_budget DESC,department_avg_salary LIMIT 10;
+SET@running_total:=0,@previous_salary:=0;SELECT E.id,E.name,CONCAT(E.first_name,' ',E.last_name)AS full_name,D.name AS department,P.title AS project,T.task_description,AVG(T.hours)AS average_hours,SUM(T.hours)OVER(PARTITION BY E.id ORDER BY T.date)AS cumulative_hours,@running_total:=@running_total+E.salary AS running_total_salary,CASE WHEN@previous_salary<E.salary THEN'Increased'ELSE'Decreased'END AS salary_trend,@previous_salary:=E.salary,(SELECT GROUP_CONCAT(task_name SEPARATOR', ')FROM tasks WHERE employee_id=E.id)AS all_tasks,(SELECT MAX(budget)FROM projects WHERE manager_id=E.id)AS max_project_budget,(SELECT MIN(start_date)FROM projects WHERE department_id=D.id)AS department_earliest_project,(SELECT COUNT(*)FROM department_employees WHERE department_id=D.id)AS department_size,(SELECT AVG(salary)FROM employees WHERE department_id=D.id)AS department_avg_salary,(SELECT SUM(hours)FROM tasks WHERE employee_id=E.id AND date BETWEEN'2023-01-01'AND'2023-06-30')AS total_hours_first_half FROM employees E JOIN department_employees DE ON E.id=DE.employee_id JOIN departments D ON DE.department_id=D.id LEFT JOIN project_assignments PA ON E.id=PA.employee_id LEFT JOIN projects P ON PA.project_id=P.id LEFT JOIN tasks T ON E.id=T.employee_id WHERE E.salary>(SELECT AVG(salary)FROM employees WHERE department_id=D.id)AND E.start_date<'2023-01-01'AND EXISTS(SELECT 1 FROM projects WHERE manager_id=E.id)GROUP BY E.id,E.name,D.name,P.title,T.task_description ORDER BY cumulative_hours DESC,max_project_budget DESC,department_avg_salary LIMIT 10;
+```
+
+## Benchmark:
+[Used code for test and get those results.](https://github.com/bsnext/MySQL-Minifier/blob/main/src/benchmark/index.ts)
+```
+[No Cache] Minify Very-Expensive SQL Query: x100.000 / 5015.74 ms.
+[No Cache] Minify Medium SQL Query: x100.000 / 2476.25 ms.
+[No Cache] Minify Cheap SQL Query: x100.000 / 1129.22 ms.
+[Cache] Minify Very-Expensive SQL Query: x100.000 / 6.07 ms.
+[Cache] Minify Medium SQL Query: x100.000 / 4.78 ms.
+[Cache] Minify Cheap SQL Query: x100.000 / 4.77 ms.
+```
+```
+[Cache] Minify Very-Expensive SQL Query: x10.000.000 / 92.09 ms.
+[Cache] Minify Medium SQL Query: x10.000.000 / 89.60 ms.
+[Cache] Minify Cheap SQL Query: x10.000.000 / 85.53 ms.
 ```
