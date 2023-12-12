@@ -5,7 +5,8 @@ Small library for compress queries, for decrease data-size transfered in network
 ## Usage:
 ```ts
 import MySQLMinifier from "?";
-const minifier = new MySQLMinifier();
+const caching = true;
+const minifier = new MySQLMinifier(caching); // Caching is a optional argument for save minified results in-memory. Default 'false: boolean'.
 const result = minifier.minify(`HERE A YOUR MYSQL QUERY`);
 ```
 
