@@ -1,4 +1,5 @@
 import MySQLMinifier from '..';
+import * as process from "process";
 
 const queryExpensive = `
     SET @running_total := 0, @previous_salary := 0; -- Initialize variables for running total and previous salary
@@ -124,7 +125,7 @@ const queryCheap = `
 }
 
 {
-    const minifier = new MySQLMinifier(); 
+    const minifier = new MySQLMinifier();
     const startTime = performance.now();
 
     for (let i = 0; i < 100000; i++) {
@@ -205,3 +206,5 @@ const queryCheap = `
 
     console.log(`[Cache] Minify Cheap SQL Query: x10.000.000 / ${(performance.now() - startTime).toFixed(2)} ms.`);
 }
+
+process.exit();

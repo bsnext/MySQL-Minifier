@@ -1,6 +1,9 @@
 export default class MySQLMinifier {
     private cache;
     private isCaching;
-    constructor(isCaching?: boolean);
+    private cacheSize;
+    private cacheLimit;
+    constructor(isCaching?: boolean, cacheLimit?: number, cachePurgeTime?: number);
     minify(query: string): string;
+    purge(): void;
 }

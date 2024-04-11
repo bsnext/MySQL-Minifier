@@ -11,21 +11,30 @@ const removeWhitespaceAroundLiterals = new RegExp(/\s*(!\$LIT\d{1,5}!\$)\s*/g);
 
 // Define a class
 export default class MySQLMinifier {
-    private cache: Map<string, string>;
+    private cache: { [key: string]: string; };
     private isCaching: boolean;
+    private cacheSize: number;
+    private cacheLimit: number;
 
-    constructor(isCaching: boolean = false) {
-        // Define a Map to cache the queries
-        this.cache = new Map<string, string>();
+    constructor(isCaching: boolean = false, cacheLimit: number = 100, cachePurgeTime: number = 60000 * 5) {
         this.isCaching = isCaching;
+        this.cacheLimit = cacheLimit;
+        this.cacheSize = 0;
+        this.cache = {};
+
+        if (isCaching) {
+            setInterval(this.purge, cachePurgeTime);
+        }
     }
 
     minify(query: string): string {
         // Check if the query is already in the cache
-        if (this.isCaching && this.cache.has(query)) {
-            return this.cache.get(query)!;
+        const cachedQuery = this.cache[query];
+
+        if (this.isCaching && cachedQuery) {
+            return cachedQuery;
         }
-        
+
         // Extract and store string literals
         const literals: string[] = [];
 
@@ -57,9 +66,24 @@ export default class MySQLMinifier {
 
         // Cache the transformed query
         if (this.isCaching) {
-            this.cache.set(query, transformedQuery);
+            if (this.cacheSize >= this.cacheLimit) {
+                this.cacheSize = 1;
+            } else {
+                this.cacheSize = this.cacheSize + 1;
+            }
+
+            this.cache[query] = transformedQuery;
         };
 
         return transformedQuery;
+    }
+
+    purge() {
+        if (!this.isCaching) {
+            throw new Error("MySQL-Minifier caching is not enabled, .purge() method not available.");
+        }
+
+        this.cacheSize = 0;
+        this.cache = {};
     }
 }

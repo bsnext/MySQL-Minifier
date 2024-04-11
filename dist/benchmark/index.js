@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const __1 = require("..");
+const process = require("process");
 const queryExpensive = `
     SET @running_total := 0, @previous_salary := 0; -- Initialize variables for running total and previous salary
 
@@ -168,4 +169,5 @@ const queryCheap = `
     }
     console.log(`[Cache] Minify Cheap SQL Query: x10.000.000 / ${(performance.now() - startTime).toFixed(2)} ms.`);
 }
+process.exit();
 //# sourceMappingURL=index.js.map

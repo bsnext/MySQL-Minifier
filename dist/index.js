@@ -7,13 +7,19 @@ const parenKeywordsRegex = new RegExp(/\)\s+(AS|AND|ORDER|WHERE|FROM)\s+\(/g);
 const restoreLiteralsRegex = new RegExp(/\!\$LIT(\d+)\!\$/g);
 const removeWhitespaceAroundLiterals = new RegExp(/\s*(!\$LIT\d{1,5}!\$)\s*/g);
 class MySQLMinifier {
-    constructor(isCaching = false) {
-        this.cache = new Map();
+    constructor(isCaching = false, cacheLimit = 100, cachePurgeTime = 60000 * 5) {
         this.isCaching = isCaching;
+        this.cacheLimit = cacheLimit;
+        this.cacheSize = 0;
+        this.cache = {};
+        if (isCaching) {
+            setInterval(this.purge, cachePurgeTime);
+        }
     }
     minify(query) {
-        if (this.isCaching && this.cache.has(query)) {
-            return this.cache.get(query);
+        const cachedQuery = this.cache[query];
+        if (this.isCaching && cachedQuery) {
+            return cachedQuery;
         }
         const literals = [];
         let transformedQuery = query.replace(literalsRegex, match => {
@@ -30,10 +36,23 @@ class MySQLMinifier {
         transformedQuery = transformedQuery.replace(restoreLiteralsRegex, (match, index) => literals[parseInt(index, 10)]);
         transformedQuery = transformedQuery.trim();
         if (this.isCaching) {
-            this.cache.set(query, transformedQuery);
+            if (this.cacheSize >= this.cacheLimit) {
+                this.cacheSize = 1;
+            }
+            else {
+                this.cacheSize = this.cacheSize + 1;
+            }
+            this.cache[query] = transformedQuery;
         }
         ;
         return transformedQuery;
+    }
+    purge() {
+        if (!this.isCaching) {
+            throw new Error("MySQL-Minifier caching is not enabled, .purge() method not available.");
+        }
+        this.cacheSize = 0;
+        this.cache = {};
     }
 }
 exports.default = MySQLMinifier;

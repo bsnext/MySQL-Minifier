@@ -1,8 +1,9 @@
 {
-	"name": "mysql-minifier",
+	"name": "@bsnext/mysql-minifier",
 	"version": "1.0.0",
-	"description": "",
+	"description": "MySQL/SQL Queries minifier.",
 	"main": "dist/index.js",
+	"types": "dist/index.d.ts",
 	"scripts": {
 		"example": "npm run build && node dist/example/index.js",
 		"start": "npm run build && node dist/index.js",
@@ -10,10 +11,28 @@
 		"build": "tsc --project tsconfig.json",
 		"watch": "tsc --watch"
 	},
-	"author": "",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/bsnext/MySQL-Minifier.git"
+	},
+	"keywords": [
+		"mysql",
+		"sql",
+		"sqlite",
+		"optimizer",
+		"compress",
+		"minifier"
+	],
+	"bugs": {
+		"url": "https://github.com/bsnext/MySQL-Minifier/issues"
+	},
+	"homepage": "https://github.com/bsnext/MySQL-Minifier#readme",
+	"author": "SalwadoR",
 	"type": "commonjs",
 	"license": "MIT",
-	"dependencies": {},
+	"dependencies": {
+		"@types/node": "^20.12.7"
+	},
 	"devDependencies": {
 		"typescript": "^4.9.3"
 	}
