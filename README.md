@@ -2,12 +2,28 @@
 
 Small library for compress queries, for decrease data-size transfered in network.
 
+## Installing:
+```bash
+npm install @bsnext/mysql-minifier
+```
+
+```ts
+import MySQLMinifier from "@bsnext/mysql-minifier";
+const minifier = new MySQLMinifier(true);
+const result = minifier.minify(`HERE A YOUR MYSQL QUERY`);
+```
+
 ## Usage:
 ```ts
-import MySQLMinifier from "?";
-const caching = true;
-const minifier = new MySQLMinifier(caching); // Caching is a optional argument for save minified results in-memory. Default 'false: boolean'.
-const result = minifier.minify(`HERE A YOUR MYSQL QUERY`);
+new MySQLMinifier(isCaching: boolean = false, cacheLimit: number = 100, cachePurgeTime: number = 300000)
+```
+
+* isCaching - State of cache mode for store parsed keys.
+* cacheLimit - Limit of cached keys. Cache will purged when reach limit keys.
+* cachePurgeTime - Interval (ms) for purge cache.
+
+```ts
+minifier.purge();  // Method for manually purge cache.
 ```
 
 ## Example:
@@ -68,15 +84,17 @@ SET@running_total:=0,@previous_salary:=0;SELECT E.id,E.name,CONCAT(E.first_name,
 ## Benchmark:
 [Used code for test and get those results.](https://github.com/bsnext/MySQL-Minifier/blob/main/src/benchmark/index.ts)
 ```
-[No Cache] Minify Very-Expensive SQL Query: x100.000 / 5015.74 ms.
-[No Cache] Minify Medium SQL Query: x100.000 / 2476.25 ms.
-[No Cache] Minify Cheap SQL Query: x100.000 / 1129.22 ms.
-[Cache] Minify Very-Expensive SQL Query: x100.000 / 6.07 ms.
-[Cache] Minify Medium SQL Query: x100.000 / 4.78 ms.
-[Cache] Minify Cheap SQL Query: x100.000 / 4.77 ms.
+[No Cache] Minify Very-Expensive SQL Query: x100.000 / 4802.67 ms.
+[No Cache] Minify Medium SQL Query: x100.000 / 2517.77 ms.
+[No Cache] Minify Cheap SQL Query: x100.000 / 1094.89 ms.
+[Cache] Minify Very-Expensive SQL Query: x100.000 / 4.86 ms.
+[Cache] Minify Medium SQL Query: x100.000 / 4.37 ms.
+[Cache] Minify Cheap SQL Query: x100.000 / 3.58 ms.
 ```
 ```
-[Cache] Minify Very-Expensive SQL Query: x10.000.000 / 92.09 ms.
-[Cache] Minify Medium SQL Query: x10.000.000 / 89.60 ms.
-[Cache] Minify Cheap SQL Query: x10.000.000 / 85.53 ms.
+[Cache] Minify Very-Expensive SQL Query: x10.000.000 / 106.31 ms.
+[Cache] Minify Medium SQL Query: x10.000.000 / 111.25 ms.
+[Cache] Minify Cheap SQL Query: x10.000.000 / 105.74 ms.
 ```
+
+Tested on Node.JS v20.11.1, Ryzen 7 3800X 3.9 GHz
