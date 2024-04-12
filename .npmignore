@@ -1,0 +1,4 @@
+/src/**/*.ts
+/dist/benchmark/**
+/dist/example/**
+tsconfig.json
