@@ -1,6 +1,6 @@
 {
 	"name": "@bsnext/mysql-minifier",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"description": "MySQL/SQL Queries minifier.",
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
@@ -31,9 +31,9 @@
 	"type": "commonjs",
 	"license": "MIT",
 	"dependencies": {
-		"@types/node": "^20.12.7"
 	},
 	"devDependencies": {
+		"@types/node": "^20.12.7",
 		"typescript": "^4.9.3"
 	}
 }
