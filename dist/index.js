@@ -13,7 +13,7 @@ class MySQLMinifier {
         this.cacheSize = 0;
         this.cache = {};
         if (isCaching) {
-            setInterval(this.purge, cachePurgeTime);
+            setInterval(this.purge.bind(this), cachePurgeTime);
         }
     }
     minify(query) {
