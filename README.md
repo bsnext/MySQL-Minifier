@@ -15,16 +15,12 @@ const result = minifier.minify(`HERE A YOUR MYSQL QUERY`);
 
 ## Usage:
 ```ts
-new MySQLMinifier(isCaching: boolean = false, cacheLimit: number = 100, cachePurgeTime: number = 300000)
+new MySQLMinifier(isCaching: boolean = false, cacheLimit: number = 100, cachePurgeTime?: number)
 ```
 
-* isCaching - State of cache mode for store parsed keys.
-* cacheLimit - Limit of cached keys. Cache will purged when reach limit keys.
-* cachePurgeTime - Interval (ms) for purge cache.
-
-```ts
-minifier.purge();  // Method for manually purge cache.
-```
+* isCaching - State of LRU cache mode for store parsed keys.
+* cacheLimit - Limit of max LRU cache size.
+* cachePurgeTime - Interval (seconds) for purge cache. Disabled by default.
 
 ## Example:
 <b>2884 characters.</b>
@@ -82,19 +78,14 @@ SET@running_total:=0,@previous_salary:=0;SELECT E.id,E.name,CONCAT(E.first_name,
 ```
 
 ## Benchmark:
-[Used code for test and get those results.](https://github.com/bsnext/MySQL-Minifier/blob/main/src/benchmark/index.ts)
-```
-[No Cache] Minify Very-Expensive SQL Query: x100.000 / 4802.67 ms.
-[No Cache] Minify Medium SQL Query: x100.000 / 2517.77 ms.
-[No Cache] Minify Cheap SQL Query: x100.000 / 1094.89 ms.
-[Cache] Minify Very-Expensive SQL Query: x100.000 / 4.86 ms.
-[Cache] Minify Medium SQL Query: x100.000 / 4.37 ms.
-[Cache] Minify Cheap SQL Query: x100.000 / 3.58 ms.
-```
-```
-[Cache] Minify Very-Expensive SQL Query: x10.000.000 / 106.31 ms.
-[Cache] Minify Medium SQL Query: x10.000.000 / 111.25 ms.
-[Cache] Minify Cheap SQL Query: x10.000.000 / 105.74 ms.
-```
+[Used code for test and get those results.](https://github.com/bsnext/MySQL-Minifier/blob/main/src/benchmark)
+```js
+[No Cache] Minify Very-Expensive x 21,620 ops/sec ±0.50% (95 runs sampled)
+[No Cache] Minify Medium SQL Query x 41,684 ops/sec ±0.73% (94 runs sampled)
+[No Cache] Minify Cheap SQL Query x 91,676 ops/sec ±0.37% (93 runs sampled)
+[Cache] Minify Very-Expensive x 125,527,995 ops/sec ±3.23% (83 runs sampled)
+[Cache] Minify Medium SQL Query x 125,468,551 ops/sec ±3.82% (84 runs sampled)
+[Cache] Minify Cheap SQL Query x 122,797,325 ops/sec ±3.46% (82 runs sampled)
 
-Tested on Node.JS v20.11.1, Ryzen 7 3800X 3.9 GHz
+// Node v22.8.0, Win 11, Ryzen 7 3800X 3.89 GHz, 32 GB RAM 3200 MHz
+```

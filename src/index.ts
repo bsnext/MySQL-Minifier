@@ -11,28 +11,32 @@ const removeWhitespaceAroundLiterals = new RegExp(/\s*(!\$LIT\d{1,5}!\$)\s*/g);
 
 // Define a class
 export default class MySQLMinifier {
-    private cache: { [key: string]: string; };
+    private cache?: LRUCache;
     private isCaching: boolean;
     private cacheSize: number;
     private cacheLimit: number;
 
-    constructor(isCaching: boolean = false, cacheLimit: number = 100, cachePurgeTime: number = 60000 * 5) {
+    constructor(isCaching: boolean = false, cacheLimit: number = 100, cachePurgeTime?: number) {
         this.isCaching = isCaching;
         this.cacheLimit = cacheLimit;
-        this.cacheSize = 0;
-        this.cache = {};
 
-        if (isCaching) {
-            setInterval(this.purge.bind(this), cachePurgeTime);
+        if (this.isCaching) {
+            this.cache = new LRUCache(cacheLimit);
+
+            if ((typeof cachePurgeTime === `number`) && (cachePurgeTime > 1)) {
+                setInterval(this.cache.clear.bind(this.cache), cachePurgeTime * 1000);
+            }
         }
     }
 
     minify(query: string): string {
         // Check if the query is already in the cache
-        const cachedQuery = this.cache[query];
+        if (this.isCaching) {            
+            const cachedQuery = this.cache!.get<string>(query);
 
-        if (this.isCaching && cachedQuery) {
-            return cachedQuery;
+            if (cachedQuery) {
+                return cachedQuery;
+            }
         }
 
         // Extract and store string literals
@@ -66,24 +70,125 @@ export default class MySQLMinifier {
 
         // Cache the transformed query
         if (this.isCaching) {
-            if (this.cacheSize >= this.cacheLimit) {
-                this.cacheSize = 1;
-            } else {
-                this.cacheSize = this.cacheSize + 1;
-            }
-
-            this.cache[query] = transformedQuery;
+            this.cache!.set(query, transformedQuery);
         };
 
         return transformedQuery;
     }
+}
 
-    purge() {
-        if (!this.isCaching) {
-            throw new Error("MySQL-Minifier caching is not enabled, .purge() method not available.");
+////////////////////////////////
+
+interface LRUCacheNode {
+    key: string;
+    value: any;
+    prev: LRUCacheNode | null;
+    next: LRUCacheNode | null;
+}
+
+class LRUCache {
+    private limit: number;
+    private cache: Record<string, LRUCacheNode | undefined>;
+    private size: number = 0;
+    private head: LRUCacheNode | null = null;
+    private tail: LRUCacheNode | null = null;
+
+    constructor(limit: number = 100) {
+        this.limit = limit;
+        this.cache = {};
+    }
+
+    private moveToHead(node: LRUCacheNode): void {
+        if (this.head === node) {
+            return;
         }
 
-        this.cacheSize = 0;
+        if (node.prev !== null) {
+            node.prev.next = node.next;
+        }
+
+        if (node.next !== null) {
+            node.next.prev = node.prev;
+        }
+
+        if (this.tail === node) {
+            this.tail = node.prev;
+        }
+
+        node.next = this.head;
+        node.prev = null;
+
+        if (this.head !== null) {
+            this.head.prev = node;
+        }
+
+        this.head = node;
+
+        if (this.tail === null) {
+            this.tail = node;
+        }
+    }
+
+    private removeTail(): void {
+        if (this.tail === null) {
+            return;
+        }
+
+        const tailNode = this.tail;
+        delete this.cache[tailNode.key];
+
+        if (tailNode.prev !== null) {
+            this.tail = tailNode.prev;
+            this.tail.next = null;
+        } else {
+            this.head = null;
+            this.tail = null;
+        }
+
+        this.size--;
+    }
+
+    get<T>(key: string): T | undefined {
+        const node = this.cache[key];
+
+        if (node === undefined) {
+            return undefined;
+        }
+
+        this.moveToHead(node);
+
+        return node.value as T;
+    }
+
+    set(key: string, value: any): void {
+        let node = this.cache[key];
+
+        if (node !== undefined) {
+            node.value = value;
+            this.moveToHead(node);
+        } else {
+            node = {
+                key: key,
+                value: value,
+                prev: null,
+                next: null,
+            };
+
+            this.cache[key] = node;
+            this.moveToHead(node);
+
+            this.size++;
+
+            if (this.size > this.limit) {
+                this.removeTail();
+            }
+        }
+    }
+
+    clear(): void {
         this.cache = {};
+        this.head = null;
+        this.tail = null;
+        this.size = 0;
     }
 }

@@ -7,19 +7,22 @@ const parenKeywordsRegex = new RegExp(/\)\s+(AS|AND|ORDER|WHERE|FROM)\s+\(/g);
 const restoreLiteralsRegex = new RegExp(/\!\$LIT(\d+)\!\$/g);
 const removeWhitespaceAroundLiterals = new RegExp(/\s*(!\$LIT\d{1,5}!\$)\s*/g);
 class MySQLMinifier {
-    constructor(isCaching = false, cacheLimit = 100, cachePurgeTime = 60000 * 5) {
+    constructor(isCaching = false, cacheLimit = 100, cachePurgeTime) {
         this.isCaching = isCaching;
         this.cacheLimit = cacheLimit;
-        this.cacheSize = 0;
-        this.cache = {};
-        if (isCaching) {
-            setInterval(this.purge.bind(this), cachePurgeTime);
+        if (this.isCaching) {
+            this.cache = new LRUCache(cacheLimit);
+            if ((typeof cachePurgeTime === `number`) && (cachePurgeTime > 1)) {
+                setInterval(this.cache.clear.bind(this.cache), cachePurgeTime * 1000);
+            }
         }
     }
     minify(query) {
-        const cachedQuery = this.cache[query];
-        if (this.isCaching && cachedQuery) {
-            return cachedQuery;
+        if (this.isCaching) {
+            const cachedQuery = this.cache.get(query);
+            if (cachedQuery) {
+                return cachedQuery;
+            }
         }
         const literals = [];
         let transformedQuery = query.replace(literalsRegex, match => {
@@ -36,24 +39,94 @@ class MySQLMinifier {
         transformedQuery = transformedQuery.replace(restoreLiteralsRegex, (match, index) => literals[parseInt(index, 10)]);
         transformedQuery = transformedQuery.trim();
         if (this.isCaching) {
-            if (this.cacheSize >= this.cacheLimit) {
-                this.cacheSize = 1;
-            }
-            else {
-                this.cacheSize = this.cacheSize + 1;
-            }
-            this.cache[query] = transformedQuery;
+            this.cache.set(query, transformedQuery);
         }
         ;
         return transformedQuery;
     }
-    purge() {
-        if (!this.isCaching) {
-            throw new Error("MySQL-Minifier caching is not enabled, .purge() method not available.");
-        }
-        this.cacheSize = 0;
-        this.cache = {};
-    }
 }
 exports.default = MySQLMinifier;
+class LRUCache {
+    constructor(limit = 100) {
+        this.size = 0;
+        this.head = null;
+        this.tail = null;
+        this.limit = limit;
+        this.cache = {};
+    }
+    moveToHead(node) {
+        if (this.head === node) {
+            return;
+        }
+        if (node.prev !== null) {
+            node.prev.next = node.next;
+        }
+        if (node.next !== null) {
+            node.next.prev = node.prev;
+        }
+        if (this.tail === node) {
+            this.tail = node.prev;
+        }
+        node.next = this.head;
+        node.prev = null;
+        if (this.head !== null) {
+            this.head.prev = node;
+        }
+        this.head = node;
+        if (this.tail === null) {
+            this.tail = node;
+        }
+    }
+    removeTail() {
+        if (this.tail === null) {
+            return;
+        }
+        const tailNode = this.tail;
+        delete this.cache[tailNode.key];
+        if (tailNode.prev !== null) {
+            this.tail = tailNode.prev;
+            this.tail.next = null;
+        }
+        else {
+            this.head = null;
+            this.tail = null;
+        }
+        this.size--;
+    }
+    get(key) {
+        const node = this.cache[key];
+        if (node === undefined) {
+            return undefined;
+        }
+        this.moveToHead(node);
+        return node.value;
+    }
+    set(key, value) {
+        let node = this.cache[key];
+        if (node !== undefined) {
+            node.value = value;
+            this.moveToHead(node);
+        }
+        else {
+            node = {
+                key: key,
+                value: value,
+                prev: null,
+                next: null,
+            };
+            this.cache[key] = node;
+            this.moveToHead(node);
+            this.size++;
+            if (this.size > this.limit) {
+                this.removeTail();
+            }
+        }
+    }
+    clear() {
+        this.cache = {};
+        this.head = null;
+        this.tail = null;
+        this.size = 0;
+    }
+}
 //# sourceMappingURL=index.js.map

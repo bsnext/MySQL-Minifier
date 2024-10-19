@@ -1,6 +1,8 @@
-import MySQLMinifier from '..';
-import * as process from "process";
-
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const __1 = require("..");
+const Benchmark = require("benchmark");
+const bench = new Benchmark.Suite();
 const queryExpensive = `
     SET @running_total := 0, @previous_salary := 0; -- Initialize variables for running total and previous salary
 
@@ -47,7 +49,6 @@ const queryExpensive = `
         cumulative_hours DESC, max_project_budget DESC, department_avg_salary -- Order by several criteria
     LIMIT 10; # Limit to top 10 results
 `;
-
 const queryMedium = `
     SET @\`row_number\` = 0;
 
@@ -82,7 +83,6 @@ const queryMedium = `
         total_hours_first_half DESC, max_project_budget DESC
     LIMIT 10;
 `;
-
 const queryCheap = `
     SELECT
         orders.id,
@@ -98,113 +98,12 @@ const queryCheap = `
     FROM orders
     JOIN customers ON orders.customer_id = customers.id;
 `;
-
-////////////////////////////////
-// NO CACHE
-
-{
-    const minifier = new MySQLMinifier();
-    const startTime = performance.now();
-
-    for (let i = 0; i < 100000; i++) {
-        minifier.minify(queryExpensive);
-    }
-
-    console.log(`[No Cache] Minify Very-Expensive SQL Query: x100.000 / ${(performance.now() - startTime).toFixed(2)} ms.`);
-}
-
-{
-    const minifier = new MySQLMinifier();
-    const startTime = performance.now();
-
-    for (let i = 0; i < 100000; i++) {
-        minifier.minify(queryMedium);
-    }
-
-    console.log(`[No Cache] Minify Medium SQL Query: x100.000 / ${(performance.now() - startTime).toFixed(2)} ms.`);
-}
-
-{
-    const minifier = new MySQLMinifier();
-    const startTime = performance.now();
-
-    for (let i = 0; i < 100000; i++) {
-        minifier.minify(queryCheap);
-    }
-
-    console.log(`[No Cache] Minify Cheap SQL Query: x100.000 / ${(performance.now() - startTime).toFixed(2)} ms.`);
-}
-
-////////////////////////////////
-// WITH CACHE
-
-{
-    const minifier = new MySQLMinifier(true);
-    const startTime = performance.now();
-
-    for (let i = 0; i < 100000; i++) {
-        minifier.minify(queryExpensive);
-    }
-
-    console.log(`[Cache] Minify Very-Expensive SQL Query: x100.000 / ${(performance.now() - startTime).toFixed(2)} ms.`);
-}
-
-{
-    const minifier = new MySQLMinifier(true);
-    const startTime = performance.now();
-
-    for (let i = 0; i < 100000; i++) {
-        minifier.minify(queryMedium);
-    }
-
-    console.log(`[Cache] Minify Medium SQL Query: x100.000 / ${(performance.now() - startTime).toFixed(2)} ms.`);
-}
-
-{
-    const minifier = new MySQLMinifier(true);
-    const startTime = performance.now();
-
-    for (let i = 0; i < 100000; i++) {
-        minifier.minify(queryCheap);
-    }
-
-    console.log(`[Cache] Minify Cheap SQL Query: x100.000 / ${(performance.now() - startTime).toFixed(2)} ms.`);
-}
-
-////////////////////////////////
-// WITH CACHE, BUT x100
-
-{
-    const minifier = new MySQLMinifier(true);
-    const startTime = performance.now();
-
-    for (let i = 0; i < 10000000; i++) {
-        minifier.minify(queryExpensive);
-    }
-
-    console.log(`[Cache] Minify Very-Expensive SQL Query: x10.000.000 / ${(performance.now() - startTime).toFixed(2)} ms.`);
-}
-
-{
-    const minifier = new MySQLMinifier(true);
-    const startTime = performance.now();
-
-    for (let i = 0; i < 10000000; i++) {
-        minifier.minify(queryMedium);
-    }
-
-    console.log(`[Cache] Minify Medium SQL Query: x10.000.000 / ${(performance.now() - startTime).toFixed(2)} ms.`);
-}
-
-{
-    const minifier = new MySQLMinifier(true);
-    const startTime = performance.now();
-
-    for (let i = 0; i < 10000000; i++) {
-        minifier.minify(queryCheap);
-    }
-
-    console.log(`[Cache] Minify Cheap SQL Query: x10.000.000 / ${(performance.now() - startTime).toFixed(2)} ms.`);
-}
-
-process.exit();
+const minifier_1 = new __1.default(true);
+bench.add(`[Cache] Minify Very-Expensive`, function () {
+    minifier_1.minify(queryExpensive);
+});
+bench.on('cycle', function (e) {
+    console.log(e.target.toString());
+});
+bench.run();
+//# sourceMappingURL=cache-expensive.js.map

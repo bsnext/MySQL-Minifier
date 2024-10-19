@@ -1,8 +1,13 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-const __1 = require("..");
-const Benchmark = require("benchmark");
+import MySQLMinifier from '..';
+
+import * as Benchmark from "benchmark";
+
+////////////////////////////////
+
 const bench = new Benchmark.Suite();
+
+////////////////////////////////
+
 const queryExpensive = `
     SET @running_total := 0, @previous_salary := 0; -- Initialize variables for running total and previous salary
 
@@ -49,6 +54,7 @@ const queryExpensive = `
         cumulative_hours DESC, max_project_budget DESC, department_avg_salary -- Order by several criteria
     LIMIT 10; # Limit to top 10 results
 `;
+
 const queryMedium = `
     SET @\`row_number\` = 0;
 
@@ -83,6 +89,7 @@ const queryMedium = `
         total_hours_first_half DESC, max_project_budget DESC
     LIMIT 10;
 `;
+
 const queryCheap = `
     SELECT
         orders.id,
@@ -98,32 +105,46 @@ const queryCheap = `
     FROM orders
     JOIN customers ON orders.customer_id = customers.id;
 `;
-const minifier_1 = new __1.default();
-bench.add(`[No Cache] Minify Very-Expensive`, function () {
-    minifier_1.minify(queryExpensive);
-});
-const minifier_2 = new __1.default();
-bench.add(`[No Cache] Minify Medium SQL Query`, function () {
+
+////////////////////////////////
+
+// const minifier_1 = new MySQLMinifier();
+// bench.add(`[No Cache] Minify Very-Expensive`, function () {
+//     minifier_1.minify(queryExpensive);
+// });
+
+const minifier_2 = new MySQLMinifier(true);
+bench.add(`[Cache] Minify Medium SQL Query`, function () {
     minifier_2.minify(queryMedium);
 });
-const minifier_3 = new __1.default();
-bench.add(`[No Cache] Minify Cheap SQL Query`, function () {
-    minifier_3.minify(queryCheap);
-});
-const minifier_6 = new __1.default(true);
-bench.add(`[Cache] Minify Cheap SQL Query`, function () {
-    minifier_6.minify(queryCheap);
-});
-const minifier_4 = new __1.default(true);
-bench.add(`[Cache] Minify Very-Expensive`, function () {
-    minifier_4.minify(queryExpensive);
-});
-const minifier_5 = new __1.default(true);
-bench.add(`[Cache] Minify Medium SQL Query`, function () {
-    minifier_5.minify(queryMedium);
-});
+
+// const minifier_3 = new MySQLMinifier();
+// bench.add(`[No Cache] Minify Cheap SQL Query`, function () {
+//     minifier_3.minify(queryCheap);
+// });
+
+////////////////////////////////
+
+// const minifier_4 = new MySQLMinifier(true);
+// bench.add(`[Cache] Minify Very-Expensive`, function () {
+//     minifier_4.minify(queryExpensive);
+// });
+
+// const minifier_5 = new MySQLMinifier(true);
+// bench.add(`[Cache] Minify Medium SQL Query`, function () {
+//     minifier_5.minify(queryMedium);
+// });
+
+// const minifier_6 = new MySQLMinifier(true);
+// bench.add(`[Cache] Minify Cheap SQL Query`, function () {
+//     minifier_6.minify(queryCheap);
+// });
+
+
+/////////////////////////////
+
 bench.on('cycle', function (e) {
     console.log(e.target.toString());
 });
+
 bench.run();
-//# sourceMappingURL=index.js.map
